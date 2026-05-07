@@ -15,11 +15,18 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --coverage --collectCoverageFrom='src/**/*js[x]'\n--collectCoverageFrom='!src/reportWebVitals.js' --collectCoverageFrom='!src/index.js'  --watchAll=false",
+    "test": "react-scripts test --coverage --watchAll=false",
     "eject": "react-scripts eject",
     "predeploy" : "npm run build",
     "deploy" : "gh-pages -d build"
   },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "src/**/*.jsx",
+      "!src/reportWebVitals.js",
+      "!src/index.js"
+    ],
   "eslintConfig": {
     "extends": [
       "react-app",
