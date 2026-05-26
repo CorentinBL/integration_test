@@ -25,6 +25,8 @@ jobs:
  build_test:
  # The type of runner that the job will run on
    runs-on: ubuntu-latest
+   permissions:
+    contents: write
    strategy:
      matrix:
        node-version: [21.x]
@@ -53,5 +55,28 @@ jobs:
        uses: actions/upload-pages-artifact@v3
        with:
         path: build
+     - name: Athenticate with npm
+       run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+     - name: Get latest NPM version
+       id: npm_version
+       run: |
+        echo "remote_version=$(npm view integration-test-react-corentin-2026 version || echo 0.0.0)" >> $GITHUB_OUTPUT
+     - name: Get local version
+       id: local_version
+       run: |
+        echo "local_version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+     - name: Compare versions
+       id: compare
+       run: |
+        if [ "${{ steps.local_version.outputs.local_version }}" != "${{ steps.npm_version.outputs.remote_version }}" ]; then
+         echo "should_publish=true" >> $GITHUB_OUTPUT
+        else
+         echo "should_publish=false" >> $GITHUB_OUTPUT
+        fi
+     - name: Publish to NPM
+       if: steps.compare.outputs.should_publish == 'true'
+       run: npm publish --access public
+       env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     
 
