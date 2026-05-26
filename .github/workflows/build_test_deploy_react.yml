@@ -53,5 +53,18 @@ jobs:
        uses: actions/upload-pages-artifact@v3
        with:
         path: build
+     - name: build and publish package on NPM
+       run: |
+         git config --global user.email "c.blairon-lacoste@hotmail.fr"
+         git config --global user.name "CorentinBL"
+         npm run build-npm
+         npm version patch
+         npm publish
+         git add .
+         git commit -m “updated version”
+         git push
+       env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
     
 
