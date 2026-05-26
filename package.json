@@ -1,7 +1,7 @@
 {
-  "name": "my-app",
+  "name":"integration-test-react-corentin-2026",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -19,7 +19,8 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs"
+    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs",
+    "build-npm": "rimraf dist && mkdir dist && npx babel src --out-dir dist --copy-files"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -48,9 +49,13 @@
     ]
   },
   "devDependencies": {
+    "@babel/cli": "^7.29.7",
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
     "gh-pages": "^6.3.0",
     "jsdoc": "^4.0.5",
-    "react-test-renderer": "^19.2.6"
+    "react-test-renderer": "^19.2.6",
+    "rimraf": "^6.1.3"
   },
   "homepage": "https://corentinbl.github.io/integration_test/"
 }
