@@ -5,7 +5,7 @@ import {
     isValidName,
     isValidEmail,
     validateForm,
-} from "validators";
+} from "./validators";
 
 // ────────────────────────────────────────────────────────────────────────────
 // calculateAge
