@@ -43,7 +43,7 @@ export function isValidPostalCode(postalCode) {
 export function isValidName(value) {
     if (!value || value.trim().length === 0) return false;
     // Autorise lettres Unicode (accents inclus), tiret, apostrophe, espace
-    return /^[^\d!@#$%^&*()_+=\[\]{};:"\\|,.<>\/?~`]+$/.test(value.trim());
+    return /^[^\d!@#$%^&*()_+=[\]{};:"\\|,.<>/?~`]+$/.test(value.trim());
 }
 
 /**
