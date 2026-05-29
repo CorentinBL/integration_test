@@ -12,7 +12,7 @@
  * @param {string} [props.min] - Attribut min (pour les inputs date).
  * @param {string} [props.max] - Attribut max (pour les inputs date).
  */
-const FormField = ({
+const FieldForm = ({
                        id,
                        label,
                        type = "text",
@@ -52,4 +52,4 @@ const FormField = ({
     );
 };
 
-export default FormField;
+export default FieldForm;
