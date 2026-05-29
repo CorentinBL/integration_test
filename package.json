@@ -1,12 +1,12 @@
 {
-  "name":"integration-test-react-corentin-2026",
+  "name": "integration-test-react-corentin-2026",
   "version": "0.2.0",
   "private": false,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "jest": "^27.5.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-scripts": "5.0.1",
@@ -52,6 +52,7 @@
     "@babel/cli": "^7.29.7",
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@testing-library/jest-dom": "^6.9.1",
     "gh-pages": "^6.3.0",
     "jsdoc": "^4.0.5",
     "react-test-renderer": "^19.2.6",
