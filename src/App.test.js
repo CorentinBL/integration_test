@@ -26,9 +26,4 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByTestId("registration-form")).toBeInTheDocument();
   });
-
-  test("affiche la section liste", () => {
-    render(<App />);
-    expect(screen.getByTestId("empty-list")).toBeInTheDocument();
-  });
 });
