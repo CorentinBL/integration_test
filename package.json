@@ -20,7 +20,8 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.config.json -r -d ./public/docs",
-    "build-npm": "rimraf dist && mkdir dist && npx babel src --out-dir dist --copy-files"
+    "build-npm": "rimraf dist && mkdir dist && npx babel src --out-dir dist --copy-files",
+    "cypress": "cypress open"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -28,6 +29,9 @@
       "src/**/*.jsx",
       "!src/reportWebVitals.js",
       "!src/index.js"
+    ],
+    "transformIgnorePatterns": [
+      "/node_modules/(?!axios)/"
     ]
   },
   "eslintConfig": {
@@ -53,6 +57,7 @@
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-react-jsx": "^7.29.7",
     "@testing-library/jest-dom": "^6.9.1",
+    "cypress": "^15.17.0",
     "gh-pages": "^6.3.0",
     "jsdoc": "^4.0.5",
     "react-test-renderer": "^19.2.6",

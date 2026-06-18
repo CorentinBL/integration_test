@@ -33,6 +33,7 @@ const FieldForm = ({
                 id={id}
                 name={id}
                 type={type}
+                data-cy={id}
                 value={value}
                 onChange={(e) => onChange(id, e.target.value)}
                 onBlur={() => onBlur(id)}
