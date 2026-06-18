@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000";
 
-
 /**
  * Récupère la liste complète des utilisateurs (infos réduites : id, prénom, nom).
  * @returns {Promise<Array<{id: number, prenom: string, nom: string}>>}
