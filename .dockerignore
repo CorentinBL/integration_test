@@ -1,0 +1,7 @@
+node_modules
+build
+.dockerignore
+server/DockerfilePython
+sqlfiles/DockerfileSql
+DockerfileReact
+/server/node_modules

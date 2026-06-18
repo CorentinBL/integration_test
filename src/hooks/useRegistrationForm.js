@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { validateForm } from "../utils/validators";
+import { createUser } from "../utils/api";
 import { saveRegistration } from "../utils/localStorage";
 
 const INITIAL_FIELDS = {
@@ -20,6 +21,8 @@ export function useRegistrationForm() {
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
     const [toastVisible, setToastVisible] = useState(false);
+    const [isLoading,    setIsLoading]    = useState(false);
+    const [apiError,     setApiError]     = useState(null);
 
     /** Détermine si tous les champs sont remplis (pour activer le bouton). */
     const isFormFilled = Object.values(fields).every((v) => v.trim() !== "");
@@ -52,10 +55,10 @@ export function useRegistrationForm() {
      * Soumet le formulaire : valide, sauvegarde, affiche le toast et réinitialise.
      * @param {Event} e - L'événement de soumission.
      */
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const { isValid, errors: validationErrors } = validateForm(fields);
-        // Marquer tous les champs comme touchés
+
         const allTouched = Object.keys(INITIAL_FIELDS).reduce(
             (acc, k) => ({ ...acc, [k]: true }),
             {}
@@ -67,12 +70,21 @@ export function useRegistrationForm() {
             return;
         }
 
-        saveRegistration(fields);
-        setFields(INITIAL_FIELDS);
-        setErrors({});
-        setTouched({});
-        setToastVisible(true);
-        setTimeout(() => setToastVisible(false), 3000);
+        setIsLoading(true);
+        setApiError(null);
+
+        try {
+            await createUser(fields);
+            setFields(INITIAL_FIELDS);
+            setErrors({});
+            setTouched({});
+            setToastVisible(true);
+            setTimeout(() => setToastVisible(false), 3000);
+        } catch (err) {
+            setApiError(err.message || "Erreur lors de l'enregistrement");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return {
@@ -81,6 +93,8 @@ export function useRegistrationForm() {
         touched,
         toastVisible,
         isFormFilled,
+        isLoading,
+        apiError,
         handleChange,
         handleBlur,
         handleSubmit,

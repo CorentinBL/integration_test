@@ -1,4 +1,5 @@
 import RegistrationForm from "./components/RegistrationForm";
+import RegisteredList from "./components/RegisteredList";
 import "./App.css";
 
 function App() {
