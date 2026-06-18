@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { validateForm } from "../utils/validators";
 import { createUser } from "../utils/api";
-// import { saveRegistration } from "../utils/localStorage";
 
 const INITIAL_FIELDS = {
     firstName: "",
