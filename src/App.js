@@ -12,6 +12,9 @@ function App() {
                 <section className="section-form" aria-label="Formulaire d'inscription">
                     <RegistrationForm />
                 </section>
+                <section className="section-list" aria-label="Liste des inscrits">
+                    <RegisteredList/>
+                </section>
             </main>
         </div>
     );

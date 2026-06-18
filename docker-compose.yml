@@ -3,11 +3,13 @@ version: "3.8"
 services:
   db:
     build:
-      context: .
-      dockerfile: sqlfiles/DockerfileSql
+      context: ./sqlfiles
+      dockerfile: DockerfileSql
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_ADMIN_EMAIL=${MYSQL_ADMIN_EMAIL}
+      - MYSQL_ADMIN_PASSWORD=${MYSQL_ADMIN_PASSWORD}
     volumes:
       - db-data:/var/lib/mysql
       - ./sqlfiles:/docker-entrypoint-initdb.d

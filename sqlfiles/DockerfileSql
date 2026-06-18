@@ -1,5 +1,6 @@
 FROM mysql:8.2
 
 COPY *.sql /docker-entrypoint-initdb.d/
+COPY init-admin.sh /docker-entrypoint-initdb.d/
 
 EXPOSE 3306

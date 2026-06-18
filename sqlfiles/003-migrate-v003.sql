@@ -1,0 +1,7 @@
+USE ynov_ci;
+CREATE TABLE IF NOT EXISTS admins
+(
+    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    email VARCHAR(255),
+    password VARCHAR(255)
+);
