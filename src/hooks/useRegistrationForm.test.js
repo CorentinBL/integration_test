@@ -1,22 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
 import { useRegistrationForm } from "./useRegistrationForm";
-import * as storage from "../utils/localStorage";
-
-// Mock saveRegistration
-jest.mock("../utils/localStorage", () => ({
-    saveRegistration: jest.fn(),
-}));
-
-beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-});
-
-afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-});
-
 // Helper : date adulte valide
 function adultDate() {
     const d = new Date();
