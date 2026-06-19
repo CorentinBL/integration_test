@@ -1,11 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import RegistrationForm from "../components/RegistrationForm";
-import * as storage from "../utils/localStorage";
-
-jest.mock("../utils/localStorage", () => ({
-    saveRegistration: jest.fn(),
-    getRegistrations: jest.fn(() => []),
-}));
 
 beforeEach(() => {
     jest.clearAllMocks();

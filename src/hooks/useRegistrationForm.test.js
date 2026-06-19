@@ -1,5 +1,12 @@
 import { renderHook, act } from "@testing-library/react";
 import { useRegistrationForm } from "./useRegistrationForm";
+import {createUser} from "../utils/api";
+
+
+jest.mock("../utils/api", () => ({
+    createUser: jest.fn(),
+}));
+
 // Helper : date adulte valide
 function adultDate() {
     const d = new Date();
@@ -144,36 +151,36 @@ describe("useRegistrationForm - handleBlur", () => {
 describe("useRegistrationForm - handleSubmit invalide", () => {
     const fakeEvent = { preventDefault: jest.fn() };
 
-    test("appelle preventDefault", () => {
+    test("appelle preventDefault", async() => {
         const { result } = renderHook(() => useRegistrationForm());
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => await result.current.handleSubmit(fakeEvent));
         expect(fakeEvent.preventDefault).toHaveBeenCalled();
     });
 
-    test("marque tous les champs comme touchés", () => {
+    test("marque tous les champs comme touchés", async () => {
         const { result } = renderHook(() => useRegistrationForm());
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => await result.current.handleSubmit(fakeEvent));
         const touchedKeys = Object.keys(result.current.touched);
         expect(touchedKeys).toEqual(
             expect.arrayContaining(["firstName", "lastName", "email", "birthDate", "city", "postalCode"])
         );
     });
 
-    test("remplit les erreurs si le formulaire est invalide", () => {
+    test("remplit les erreurs si le formulaire est invalide", async() => {
         const { result } = renderHook(() => useRegistrationForm());
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => result.current.handleSubmit(fakeEvent));
         expect(Object.keys(result.current.errors).length).toBeGreaterThan(0);
     });
 
-    test("ne sauvegarde pas si invalide", () => {
+    test("ne sauvegarde pas si invalide", async() => {
         const { result } = renderHook(() => useRegistrationForm());
-        act(() => result.current.handleSubmit(fakeEvent));
-        expect(storage.saveRegistration).not.toHaveBeenCalled();
+        await act(async() => result.current.handleSubmit(fakeEvent));
+        expect(createUser).not.toHaveBeenCalled();
     });
 
-    test("n'affiche pas le toast si invalide", () => {
+    test("n'affiche pas le toast si invalide", async() => {
         const { result } = renderHook(() => useRegistrationForm());
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => result.current.handleSubmit(fakeEvent));
         expect(result.current.toastVisible).toBe(false);
     });
 });
@@ -183,50 +190,60 @@ describe("useRegistrationForm - handleSubmit invalide", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("useRegistrationForm - handleSubmit valide", () => {
     const fakeEvent = { preventDefault: jest.fn() };
+    beforeEach(() => {
+        jest.useFakeTimers("modern");
+        createUser.mockResolvedValue({});
+    });
 
-    test("appelle saveRegistration avec les champs", () => {
+    afterEach(() => {
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+        jest.clearAllMocks();
+    });
+
+    test("appelle createUser avec les champs", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
-        expect(storage.saveRegistration).toHaveBeenCalledWith(
+        await act(async() => await result.current.handleSubmit(fakeEvent));
+        expect(createUser).toHaveBeenCalledWith(
             expect.objectContaining({ firstName: "Jean", lastName: "Dupont" })
         );
     });
 
-    test("remet tous les champs à vide", () => {
+    test("remet tous les champs à vide", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => await result.current.handleSubmit(fakeEvent));
         Object.values(result.current.fields).forEach((v) => expect(v).toBe(""));
     });
 
-    test("efface les erreurs", () => {
+    test("efface les erreurs", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
+       await act(async() => await result.current.handleSubmit(fakeEvent));
         expect(result.current.errors).toEqual({});
     });
 
-    test("efface les champs touchés", () => {
+    test("efface les champs touchés", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => await result.current.handleSubmit(fakeEvent));
         expect(result.current.touched).toEqual({});
     });
 
-    test("affiche le toast", () => {
+    test("affiche le toast", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
+       await act(async() => await result.current.handleSubmit(fakeEvent));
         expect(result.current.toastVisible).toBe(true);
     });
 
-    test("cache le toast après 3 secondes", () => {
+    test("cache le toast après 3 secondes", async() => {
         const { result } = renderHook(() => useRegistrationForm());
         fillAllFields(result);
-        act(() => result.current.handleSubmit(fakeEvent));
+        await act(async() => await result.current.handleSubmit(fakeEvent));
         expect(result.current.toastVisible).toBe(true);
-        act(() => jest.advanceTimersByTime(3000));
+        await act(async () => await jest.advanceTimersByTime(3000));
         expect(result.current.toastVisible).toBe(false);
     });
 });
