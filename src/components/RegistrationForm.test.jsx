@@ -1,5 +1,11 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import RegistrationForm from "../components/RegistrationForm";
+import {createUser} from "../utils/api";
+
+
+jest.mock("../utils/api", () => ({
+    createUser: jest.fn(),
+}));
 
 beforeEach(() => {
     jest.clearAllMocks();
@@ -184,7 +190,9 @@ describe("RegistrationForm - Inscription réussie", () => {
     test("affiche le toast de succès", async () => {
         render(<RegistrationForm />);
         fillForm();
-        fireEvent.click(screen.getByTestId("submit-button"));
+        await act(async () => {
+            fireEvent.click(screen.getByTestId("submit-button"));
+        })
         await waitFor(() => {
             expect(screen.getByText(/inscription enregistrée avec succès/i)).toBeInTheDocument();
         });
@@ -193,7 +201,8 @@ describe("RegistrationForm - Inscription réussie", () => {
     test("vide tous les champs après soumission", async () => {
         render(<RegistrationForm />);
         fillForm();
-        fireEvent.click(screen.getByTestId("submit-button"));
+        await act(async () => {
+            fireEvent.click(screen.getByTestId("submit-button"));});
         await waitFor(() => {
             expect(screen.getByLabelText("Prénom")).toHaveValue("");
             expect(screen.getByLabelText("Nom")).toHaveValue("");
@@ -206,17 +215,18 @@ describe("RegistrationForm - Inscription réussie", () => {
     test("le bouton est désactivé après réinitialisation", async () => {
         render(<RegistrationForm />);
         fillForm();
-        fireEvent.click(screen.getByTestId("submit-button"));
+        await act(async() => {
+            fireEvent.click(screen.getByTestId("submit-button"));});
         await waitFor(() => {
             expect(screen.getByTestId("submit-button")).toBeDisabled();
         });
     });
 
-    test("appelle saveRegistration", () => {
+    test("appelle createUser", () => {
         render(<RegistrationForm />);
         fillForm();
         fireEvent.click(screen.getByTestId("submit-button"));
-        expect(storage.saveRegistration).toHaveBeenCalledTimes(1);
+        expect(createUser).toHaveBeenCalledTimes(1);
     });
 
     test("le toast disparaît après 3 secondes", async () => {
@@ -235,10 +245,13 @@ describe("RegistrationForm - Inscription réussie", () => {
         });
     });
 
-    test("ne sauvegarde pas si le formulaire est invalide", () => {
+    test("ne sauvegarde pas si le formulaire est invalide", async () => {
         render(<RegistrationForm />);
         fillForm({ email: "invalid", postalCode: "abc" });
         fireEvent.click(screen.getByTestId("submit-button"));
-        expect(storage.saveRegistration).not.toHaveBeenCalled();
+
+        await waitFor(() => {
+            expect(createUser).not.toHaveBeenCalled();
+        });
     });
 });
