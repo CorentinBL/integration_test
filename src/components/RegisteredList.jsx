@@ -1,38 +1,32 @@
-// src/components/RegisteredList.jsx
-import { useEffect, useState } from "react";
-import { getAllUsers } from "../utils/api";
+import { useUsersList } from "../hooks/useUsersList";
+import { useUsersAdminActions } from "../hooks/useUsersAdminActions";
 
-/**
- * Composant RegisteredList
- *
- * Affiche le nombre total d'inscrits et la liste de leurs prénoms / noms.
- * Les données sont chargées depuis le backend (GET /users).
- *
- * @param {Object}  props
- * @param {boolean} [props.refresh=false] - Passer `true` pour forcer un rechargement
- *                                          (utile après une soumission de formulaire).
- */
-const RegisteredList = ({ refresh = false }) => {
-    const [users,     setUsers]     = useState([]);
-    const [loading,   setLoading]   = useState(true);
-    const [error,     setError]     = useState(null);
+const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
+    const { users, loading, error } = useUsersList(refresh);
+    const { handleDelete, handleGetDetails } = useUsersAdminActions();
 
-    useEffect(() => {
-        let cancelled = false;
-        setLoading(true);
-        setError(null);
+    const onDelete = async (id) => {
+        try {
+            await handleDelete(id, adminToken);
+            onUsersChanged?.();
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
-        getAllUsers()
-            .then((data) => { if (!cancelled) setUsers(data); })
-            .catch((err) => { if (!cancelled) setError(err.message); })
-            .finally(() => { if (!cancelled) setLoading(false); });
-
-        return () => { cancelled = true; };
-    }, [refresh]);   // se relance quand `refresh` change
+    const onDetails = async (id) => {
+        try {
+            const user = await handleGetDetails(id, adminToken);
+            console.log("User details:", user);
+            alert(JSON.stringify(user, null, 2));
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     if (loading) {
         return (
-            <div className="registered-list registered-list--loading" aria-live="polite">
+            <div className="registered-list registered-list--loading">
                 Chargement des inscrits…
             </div>
         );
@@ -40,38 +34,37 @@ const RegisteredList = ({ refresh = false }) => {
 
     if (error) {
         return (
-            <div className="registered-list registered-list--error" role="alert">
+            <div className="registered-list registered-list--error">
                 Impossible de charger la liste : {error}
             </div>
         );
     }
 
     return (
-        <section
-            className="registered-list"
-            aria-label="Liste des inscrits"
-            data-testid="registered-list"
-        >
-            <h2 className="registered-list__title">
-                Inscrits{" "}
-                <span className="registered-list__count" data-testid="registered-count">
-                    ({users.length})
-                </span>
-            </h2>
+        <section className="registered-list">
+            <h2>Inscrits ({users.length})</h2>
 
             {users.length === 0 ? (
-                <p className="registered-list__empty">Aucun inscrit pour le moment.</p>
+                <p>Aucun inscrit pour le moment.</p>
             ) : (
-                <ul className="registered-list__items">
+                <ul>
                     {users.map((user) => (
-                        <li
-                            key={user.id}
-                            className="registered-list__item"
-                            data-testid="registered-item"
-                        >
-                            <span className="registered-list__name">
+                        <li key={user.id}>
+                            <span>
                                 {user.prenom} {user.nom}
                             </span>
+
+                            {adminToken && (
+                                <span style={{ marginLeft: "10px" }}>
+                                    <button onClick={() => onDetails(user.id)}>
+                                        Détails
+                                    </button>
+
+                                    <button onClick={() => onDelete(user.id)}>
+                                        Supprimer
+                                    </button>
+                                </span>
+                            )}
                         </li>
                     ))}
                 </ul>

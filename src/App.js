@@ -25,7 +25,9 @@ function App() {
                     <RegistrationForm onRegistered={handleRegistered} />
                 </section>
                 <section className="section-list" aria-label="Liste des inscrits">
-                    <RegisteredList refresh = {refresh}/>
+                    <RegisteredList refresh = {refresh}
+                                    onUsersChanged={handleRegistered}
+                                    adminToken={admin.token}/>
                 </section>
             </main>
         </div>
