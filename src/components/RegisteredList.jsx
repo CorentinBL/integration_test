@@ -1,7 +1,10 @@
 import { useUsersList } from "../hooks/useUsersList";
 import { useUsersAdminActions } from "../hooks/useUsersAdminActions";
+import UserDetailsModal from "./UsersDetailsModal";
+import {useState} from "react";
 
 const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
+    const [selectedUser, setSelectedUser] = useState(null);
     const { users, loading, error } = useUsersList(refresh);
     const { handleDelete, handleGetDetails } = useUsersAdminActions();
 
@@ -17,8 +20,7 @@ const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
     const onDetails = async (id) => {
         try {
             const user = await handleGetDetails(id, adminToken);
-            console.log("User details:", user);
-            alert(JSON.stringify(user, null, 2));
+            setSelectedUser(user);
         } catch (err) {
             console.error(err);
         }
@@ -68,6 +70,12 @@ const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
                         </li>
                     ))}
                 </ul>
+            )}
+            {selectedUser && (
+                <UserDetailsModal
+                    user={selectedUser}
+                    onClose={() => setSelectedUser(null)}
+                />
             )}
         </section>
     );
