@@ -3,10 +3,11 @@ FROM python:3.9
 WORKDIR /server
 
 # Install Python dependencies
-RUN pip install mysql-connector-python fastapi uvicorn
+RUN pip install mysql-connector-python fastapi uvicorn pytest httpx
 
 # Copy the server script
 COPY server.py .
+COPY test_server.py .
 
 EXPOSE 8000
 
