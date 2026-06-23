@@ -11,7 +11,7 @@ describe('template spec', () => {
         });
 
         cy.visit('http://localhost:3000')
-        cy.contains('3 user(s) already registered')
+        cy.contains('Inscrits (3)')
     })
 
 })
