@@ -51,18 +51,24 @@ const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
             ) : (
                 <ul>
                     {users.map((user) => (
-                        <li key={user.id}>
+                        <li
+                            data-testid={`registered-item-${user.id}`}
+                            key={user.id}>
                             <span>
                                 {user.prenom} {user.nom}
                             </span>
 
                             {adminToken && (
                                 <span style={{ marginLeft: "10px" }}>
-                                    <button onClick={() => onDetails(user.id)}>
+                                    <button
+                                        data-testid={`details-btn-${user.id}`}
+                                        onClick={() => onDetails(user.id)}>
                                         Détails
                                     </button>
 
-                                    <button onClick={() => onDelete(user.id)}>
+                                    <button
+                                        data-testid={`delete-btn-${user.id}`}
+                                        onClick={() => onDelete(user.id)}>
                                         Supprimer
                                     </button>
                                 </span>

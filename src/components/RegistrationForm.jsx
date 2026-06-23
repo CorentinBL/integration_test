@@ -19,6 +19,7 @@ const RegistrationForm = ({onRegistered}) => {
         errors,
         toastVisible,
         isFormFilled,
+        apiError,
         handleChange,
         handleBlur,
         handleSubmit,
@@ -108,6 +109,11 @@ const RegistrationForm = ({onRegistered}) => {
                 >
                     Sauvegarder
                 </button>
+                {apiError && (
+                    <p data-testid="form-error" className="form-error">
+                        {apiError}
+                    </p>
+                )}
             </form>
         </div>
     );
