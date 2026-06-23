@@ -1,119 +1,196 @@
 name: Build, Test and Deploy React Application
-# Controls when the action will run.
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 on:
- # Triggers the workflow on push or pull request events but only for the main branch
- push:
-   branches: [ master ]
- pull_request:
-   branches: [ master ]
- # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
 jobs:
- deploy: 
-  environment: 
-   name: github-pages
-   url: ${{steps.deployment.outputs.page_url}}
-  runs-on: ubuntu-latest
-  permissions: 
-   pages: write
-   id-token: write 
-  needs: build_test
-  steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
-    
- build_test:
- # The type of runner that the job will run on
-   runs-on: ubuntu-latest
-   permissions:
-    contents: write
-   strategy:
-     matrix:
-       node-version: [21.x]
- # Steps represent a sequence of tasks that will be executed as part of the job
-   steps:
-   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-     - uses: actions/checkout@v2
-     - name: Use Node.js ${{ matrix.node-version }}
-       uses: actions/setup-node@v2
-       with:
-         node-version: ${{ matrix.node-version }}
-     - name: npm ci, build and test
-       run: | 
-        npm ci
-        npm run jsdoc
-        npm run build --if-present
-        npm test 
-     - name: Upload coverage reports to Codecov
-       uses: codecov/codecov-action@v5
-       with:
-         token: ${{ secrets.CODECOV_TOKEN }}
-     - name: Setup Pages
-       id: pages
-       uses: actions/configure-pages@v3
-     - name: Upload artifact
-       uses: actions/upload-pages-artifact@v3
-       with:
-        path: build
-     - name: Athenticate with npm
-       run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-     - name: Get latest NPM version
-       id: npm_version
-       run: |
-        echo "remote_version=$(npm view integration-test-react-corentin-2026 version || echo 0.0.0)" >> $GITHUB_OUTPUT
-     - name: Get local version
-       id: local_version
-       run: |
-        echo "local_version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-     - name: Compare versions
-       id: compare
-       run: |
-        if [ "${{ steps.local_version.outputs.local_version }}" != "${{ steps.npm_version.outputs.remote_version }}" ]; then
-         echo "should_publish=true" >> $GITHUB_OUTPUT
-        else
-         echo "should_publish=false" >> $GITHUB_OUTPUT
-        fi
-     - name: Publish to NPM
-       if: steps.compare.outputs.should_publish == 'true'
-       run: npm publish --access public
-       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        
- build-docker:
-  runs-on: ubuntu-latest
+  build_test:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [21.x]
 
-  needs: build_test
+    steps:
+      - uses: actions/checkout@v4
 
-  steps:
-  - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: 'https://registry.npmjs.org'
 
-  - name: Login Docker Hub
-    uses: docker/login-action@v3
-    with:
-      username: ${{ secrets.DOCKERHUB_USERNAME }}
-      password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # INSTRUCTION : Tests unitaires React
+      - name: npm ci and test
+        run: |
+          npm ci
+          npm test
+        env:
+          CI: true
+          REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
 
-  - name: Build frontend image
-    run: |
-      docker build \
-        -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest \
-        -f DockerfileReact .
+      # INSTRUCTION : Tests d'intégration Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
 
-  - name: Push frontend image
-    run: |
-      docker push \
-        ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+      - name: Run backend integration tests
+        run: |
+          pip install fastapi uvicorn mysql-connector-python pytest httpx
+          pytest server/test_server.py -v
 
-  - name: Build backend image
-    run: |
-      docker build \
-        -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest \
-        -f server/DockerfilePython \
-        ./server
+      # INSTRUCTION : Mettre en place l'environnement Docker
+      - name: Create .env file
+        run: |
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_HOST=db" >> .env
+          echo "MYSQL_ADMIN_EMAIL=${{ secrets.MYSQL_ADMIN_EMAIL }}" >> .env
+          echo "MYSQL_ADMIN_PASSWORD=${{ secrets.MYSQL_ADMIN_PASSWORD }}" >> .env
+          echo "REACT_APP_SERVER_URL=http://localhost:8000" >> .env
 
-  - name: Push backend image
-    run: |
-      docker push \
-        ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest      
+      - name: Build the stack
+        run: |
+          docker compose --version
+          docker compose up -d --build
+        env:
+          REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
 
+      - name: Wait for services to be healthy
+        run: sleep 40
 
+      # INSTRUCTION : Tests d'infrastructure
+      - name: Test infrastructure - API healthy
+        run: curl -f http://localhost:8000/ || exit 1
+
+      - name: Test infrastructure - Adminer healthy
+        run: curl -f http://localhost:8080/ || exit 1
+
+      - name: Test infrastructure - GET /users returns 200
+        run: curl -f http://localhost:8000/users || exit 1
+
+      - name: Test infrastructure - Admin login works
+        run: |
+          TOKEN=$(curl -s -X POST http://localhost:8000/admin/login \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${{ secrets.MYSQL_ADMIN_EMAIL }}\",\"password\":\"${{ secrets.MYSQL_ADMIN_PASSWORD }}\"}" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+          [ -n "$TOKEN" ] || exit 1
+
+      # INSTRUCTION : Tests e2e Cypress
+      - name: Run e2e tests with Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          headed: false
+          config: baseUrl=http://localhost:3000
+
+      - name: Stop the stack
+        run: docker compose down -v
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build and docs
+        run: |
+          npm run jsdoc
+          npm run build --if-present
+        env:
+          REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
+
+      - name: Authenticate with npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Check version
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          NPM_VERSION=$(npm view integration-test-react-corentin-2026 version || echo 0.0.0)
+          if [ "$LOCAL_VERSION" != "$NPM_VERSION" ]; then
+            echo "NEW_VERSION=true" >> $GITHUB_ENV
+          else
+            echo "NEW_VERSION=false" >> $GITHUB_ENV
+          fi
+
+      - name: Publish to NPM
+        if: env.NEW_VERSION == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+          if-no-files-found: error
+
+  # INSTRUCTION : Déploiement GitHub Pages (front)
+  deploy_pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    needs: build_test
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # INSTRUCTION : Déploiement Vercel (backend) + MySQL prod via secrets
+  deploy_vercel:
+    runs-on: ubuntu-latest
+    needs: build_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to prod
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  # INSTRUCTION : Build Docker + push Docker Hub
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: build_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest -f DockerfileReact .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+
+      - name: Build and push backend image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest -f server/DockerfilePython ./server
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
