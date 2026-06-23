@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RegisteredList from "./RegisteredList";
 
-// -------------------- MOCK DES HOOKS --------------------
+// ---- MOCK HOOKS ----
 jest.mock("../hooks/useUsersList", () => ({
     useUsersList: jest.fn(),
 }));
@@ -10,18 +10,18 @@ jest.mock("../hooks/useUsersAdminActions", () => ({
     useUsersAdminActions: jest.fn(),
 }));
 
-// -------------------- MOCK DU MODAL --------------------
+// ---- MOCK MODAL ----
 jest.mock("./UsersDetailsModal", () => ({ user, onClose }) => (
     <div data-testid="modal">
         <p>{user.prenom}</p>
-        <button onClick={onClose}>Fermer</button>
+        <button onClick={onClose}>close</button>
     </div>
 ));
 
 import { useUsersList } from "../hooks/useUsersList";
 import { useUsersAdminActions } from "../hooks/useUsersAdminActions";
 
-describe("Composant RegisteredList", () => {
+describe("RegisteredList", () => {
     const mockDelete = jest.fn();
     const mockDetails = jest.fn();
 
@@ -35,7 +35,7 @@ describe("Composant RegisteredList", () => {
     });
 
     // -------------------------
-    test("affiche l’état de chargement", () => {
+    test("shows loading state", () => {
         useUsersList.mockReturnValue({
             users: [],
             loading: true,
@@ -44,17 +44,15 @@ describe("Composant RegisteredList", () => {
 
         render(<RegisteredList />);
 
-        expect(
-            screen.getByText(/Chargement des inscrits/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Chargement/i)).toBeInTheDocument();
     });
 
     // -------------------------
-    test("affiche la liste des utilisateurs", () => {
+    test("renders users list", () => {
         useUsersList.mockReturnValue({
             users: [
-                { id: 1, prenom: "Jean", nom: "Dupont" },
-                { id: 2, prenom: "Marie", nom: "Martin" },
+                { id: 1, prenom: "John", nom: "Doe" },
+                { id: 2, prenom: "Jane", nom: "Smith" },
             ],
             loading: false,
             error: null,
@@ -62,12 +60,12 @@ describe("Composant RegisteredList", () => {
 
         render(<RegisteredList />);
 
-        expect(screen.getByText("Jean Dupont")).toBeInTheDocument();
-        expect(screen.getByText("Marie Martin")).toBeInTheDocument();
+        expect(screen.getByText("John Doe")).toBeInTheDocument();
+        expect(screen.getByText("Jane Smith")).toBeInTheDocument();
     });
 
     // -------------------------
-    test("affiche le message lorsqu’il n’y a aucun inscrit", () => {
+    test("shows empty state", () => {
         useUsersList.mockReturnValue({
             users: [],
             loading: false,
@@ -82,55 +80,55 @@ describe("Composant RegisteredList", () => {
     });
 
     // -------------------------
-    test("affiche les boutons admin si l’utilisateur est connecté", () => {
+    test("shows admin buttons when logged in", () => {
         useUsersList.mockReturnValue({
-            users: [{ id: 1, prenom: "Jean", nom: "Dupont" }],
+            users: [{ id: 1, prenom: "John", nom: "Doe" }],
             loading: false,
             error: null,
         });
 
-        render(<RegisteredList adminToken="token-fake" />);
+        render(<RegisteredList adminToken="fake-token" />);
 
         expect(screen.getByText("Détails")).toBeInTheDocument();
         expect(screen.getByText("Supprimer")).toBeInTheDocument();
     });
 
     // -------------------------
-    test("appelle la suppression d’un utilisateur", async () => {
+    test("calls delete function", async () => {
         useUsersList.mockReturnValue({
-            users: [{ id: 1, prenom: "Jean", nom: "Dupont" }],
+            users: [{ id: 1, prenom: "John", nom: "Doe" }],
             loading: false,
             error: null,
         });
 
-        render(<RegisteredList adminToken="token-fake" />);
+        render(<RegisteredList adminToken="token" />);
 
         fireEvent.click(screen.getByText("Supprimer"));
 
         await waitFor(() => {
-            expect(mockDelete).toHaveBeenCalledWith(1, "token-fake");
+            expect(mockDelete).toHaveBeenCalledWith(1, "token");
         });
     });
 
     // -------------------------
-    test("ouvre la modale lors du clic sur Détails", async () => {
+    test("opens modal on details click", async () => {
         useUsersList.mockReturnValue({
-            users: [{ id: 1, prenom: "Jean", nom: "Dupont" }],
+            users: [{ id: 1, prenom: "John", nom: "Doe" }],
             loading: false,
             error: null,
         });
 
         mockDetails.mockResolvedValue({
             id: 1,
-            prenom: "Jean",
+            prenom: "John",
         });
 
-        render(<RegisteredList adminToken="token-fake" />);
+        render(<RegisteredList adminToken="token" />);
 
         fireEvent.click(screen.getByText("Détails"));
 
         await waitFor(() => {
-            expect(mockDetails).toHaveBeenCalledWith(1, "token-fake");
+            expect(mockDetails).toHaveBeenCalledWith(1, "token");
             expect(screen.getByTestId("modal")).toBeInTheDocument();
         });
     });

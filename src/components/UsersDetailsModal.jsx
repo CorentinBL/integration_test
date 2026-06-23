@@ -1,4 +1,4 @@
-const UserDetailsModal = ({ user, onClose }) => {
+const UsersDetailsModal = ({ user, onClose }) => {
     if (!user) return null;
 
     return (
@@ -24,4 +24,4 @@ const UserDetailsModal = ({ user, onClose }) => {
     );
 };
 
-export default UserDetailsModal;
+export default UsersDetailsModal;

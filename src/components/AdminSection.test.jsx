@@ -5,7 +5,7 @@ jest.mock("./AdminLogin", () => () => (
     <div data-testid="admin-login-mock">AdminLogin</div>
 ));
 
-describe("AdminSection", () => {
+describe("Composant AdminSection", () => {
     const mockAdmin = {
         token: null,
         showLogin: false,
@@ -18,14 +18,16 @@ describe("AdminSection", () => {
         jest.clearAllMocks();
     });
 
-    it("renders login button when admin is not logged in", () => {
+    // -------------------------
+    it("affiche le bouton de connexion lorsque l’administrateur n’est pas connecté", () => {
         render(<AdminSection admin={mockAdmin} />);
 
         expect(screen.getByTestId("admin-login-btn")).toBeInTheDocument();
         expect(screen.getByText("Espace admin")).toBeInTheDocument();
     });
 
-    it("calls toggleLogin when login button is clicked", () => {
+    // -------------------------
+    it("appelle toggleLogin lors du clic sur le bouton de connexion", () => {
         render(<AdminSection admin={mockAdmin} />);
 
         fireEvent.click(screen.getByTestId("admin-login-btn"));
@@ -33,32 +35,29 @@ describe("AdminSection", () => {
         expect(mockAdmin.toggleLogin).toHaveBeenCalled();
     });
 
-    it("shows AdminLogin when showLogin is true", () => {
+    // -------------------------
+    it("affiche le formulaire AdminLogin lorsque showLogin est activé", () => {
         render(
-            <AdminSection
-                admin={{ ...mockAdmin, showLogin: true }}
-            />
+            <AdminSection admin={{ ...mockAdmin, showLogin: true }} />
         );
 
         expect(screen.getByTestId("admin-login-mock")).toBeInTheDocument();
     });
 
-    it("shows admin panel when token exists", () => {
+    // -------------------------
+    it("affiche le panneau admin lorsque le token est présent", () => {
         render(
-            <AdminSection
-                admin={{ ...mockAdmin, token: "fake-token" }}
-            />
+            <AdminSection admin={{ ...mockAdmin, token: "fake-token" }} />
         );
 
         expect(screen.getByTestId("admin-panel")).toBeInTheDocument();
         expect(screen.getByText("Admin connecté")).toBeInTheDocument();
     });
 
-    it("calls logout when logout button is clicked", () => {
+    // -------------------------
+    it("appelle logout lors du clic sur le bouton de déconnexion", () => {
         render(
-            <AdminSection
-                admin={{ ...mockAdmin, token: "fake-token" }}
-            />
+            <AdminSection admin={{ ...mockAdmin, token: "fake-token" }} />
         );
 
         fireEvent.click(screen.getByTestId("admin-logout-btn"));
@@ -66,7 +65,8 @@ describe("AdminSection", () => {
         expect(mockAdmin.logout).toHaveBeenCalled();
     });
 
-    it("shows correct button text depending on showLogin state", () => {
+    // -------------------------
+    it("affiche le bon texte du bouton selon l’état showLogin", () => {
         const { rerender } = render(
             <AdminSection admin={{ ...mockAdmin, showLogin: false }} />
         );

@@ -1,6 +1,6 @@
 import { useUsersList } from "../hooks/useUsersList";
 import { useUsersAdminActions } from "../hooks/useUsersAdminActions";
-import UserDetailsModal from "./UsersDetailsModal";
+import UsersDetailsModal from "./UsersDetailsModal";
 import {useState} from "react";
 
 const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
@@ -72,7 +72,7 @@ const RegisteredList = ({ refresh = false, onUsersChanged, adminToken }) => {
                 </ul>
             )}
             {selectedUser && (
-                <UserDetailsModal
+                <UsersDetailsModal
                     user={selectedUser}
                     onClose={() => setSelectedUser(null)}
                 />
