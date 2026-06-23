@@ -13,7 +13,7 @@ function getMaxBirthDate() {
 /**
  * Composant RegistrationForm – formulaire complet d'inscription.
  */
-const RegistrationForm = () => {
+const RegistrationForm = ({onRegistered}) => {
     const {
         fields,
         errors,
@@ -22,7 +22,7 @@ const RegistrationForm = () => {
         handleChange,
         handleBlur,
         handleSubmit,
-    } = useRegistrationForm();
+    } = useRegistrationForm(onRegistered);
 
     return (
         <div className="registration-form-wrapper">

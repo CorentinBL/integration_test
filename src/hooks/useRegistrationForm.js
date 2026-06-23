@@ -15,7 +15,7 @@ const INITIAL_FIELDS = {
  * Hook qui gère l'état, la validation et la soumission du formulaire d'inscription.
  * @returns {Object} État et gestionnaires du formulaire.
  */
-export function useRegistrationForm() {
+export function useRegistrationForm( onRegistered) {
     const [fields, setFields] = useState(INITIAL_FIELDS);
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
@@ -78,6 +78,7 @@ export function useRegistrationForm() {
             setErrors({});
             setTouched({});
             setToastVisible(true);
+            onRegistered?.();
             setTimeout(() => setToastVisible(false), 3000);
         } catch (err) {
             setApiError(err.message || "Erreur lors de l'enregistrement");

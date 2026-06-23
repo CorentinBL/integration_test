@@ -1,108 +1,81 @@
-import axios from 'axios';
+import axios from "axios";
 
 const BASE_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:8000";
 
+const api = axios.create({
+    baseURL: BASE_URL,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
+
+
 /**
- * Récupère la liste complète des utilisateurs (infos réduites : id, prénom, nom).
- * @returns {Promise<Array<{id: number, prenom: string, nom: string}>>}
+ * Récupère tous les utilisateurs
  */
 export async function getAllUsers() {
-    try {
-        const response = await axios.get(`${BASE_URL}/users`);
-        return response.data.utilisateurs;
-    } catch (error) {
-        //console.error(error);
-        throw error;
-    }
+    const res = await api.get("/users");
+    return res.data.utilisateurs;
 }
 
 /**
- * Enregistre un nouvel utilisateur en base.
- * @param {Object} fields - Les champs du formulaire (camelCase côté React).
- * @param {string} fields.firstName
- * @param {string} fields.lastName
- * @param {string} fields.email
- * @param {string} fields.birthDate   - format YYYY-MM-DD
- * @param {string} fields.city
- * @param {string} fields.postalCode
- * @param {string} fields.country
- * @returns {Promise<Object>} L'utilisateur créé.
+ * Compte le nombre d'utilisateurs
  */
-
 export async function countUsers() {
-    try {
-        const response = await axios.get(`${BASE_URL}/users`);
-        return response.data.utilisateurs.length;
-    }catch(error) {
-        console.error(error);
-        throw error;
-    }
+    const res = await api.get("/users");
+    return res.data.utilisateurs.length;
 }
-export async function createUser(fields) {
-    try {
-        const res = await axios.post(`${BASE_URL}/users`, {
-                prenom: fields.firstName,
-                nom: fields.lastName,
-                email: fields.email,
-                date_naissance: fields.birthDate,
-                ville: fields.city,
-                code_postal: fields.postalCode,
-            },
-            {
-                headers: {"Content-Type": "application/json"},
-            }
-        );
-        return res.data;
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Admin
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Authentifie un administrateur.
- * @param {string} email
- * @param {string} password
- * @returns {Promise<{token: string}>} Token de session (stocké côté React en mémoire ou sessionStorage).
+ * Crée un utilisateur
+ */
+export async function createUser(fields) {
+    const res = await api.post("/users", {
+        prenom: fields.firstName,
+        nom: fields.lastName,
+        email: fields.email,
+        date_naissance: fields.birthDate,
+        ville: fields.city,
+        code_postal: fields.postalCode,
+    });
+
+    return res.data;
+}
+
+/**
+ * Login admin
  */
 export async function loginAdmin(email, password) {
-    const res = await fetch(`${BASE_URL}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+    const res = await api.post("/admin/login", {
+        email,
+        password,
     });
-    if (!res.ok) throw new Error("Identifiants invalides");
-    return res.json(); // { token: "..." }
+
+    return res.data;
 }
 
 /**
- * Supprime un utilisateur (requiert le token admin dans l'en-tête Authorization).
- * @param {number} userId
- * @param {string} token
- * @returns {Promise<void>}
+ * Supprimer un utilisateur (admin only)
  */
 export async function deleteUser(userId, token) {
-    const res = await fetch(`${BASE_URL}/users/${userId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+    const res = await api.delete(`/users/${userId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
     });
-    if (!res.ok) throw new Error("Erreur lors de la suppression");
+
+    return res.data;
 }
 
 /**
- * Récupère les infos complètes (privées) d'un utilisateur (requiert token admin).
- * @param {number} userId
- * @param {string} token
- * @returns {Promise<Object>}
+ * Récupérer les détails d'un utilisateur (admin only)
  */
 export async function getUserDetails(userId, token) {
-    const res = await fetch(`${BASE_URL}/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+    const res = await api.get(`/users/${userId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
     });
-    if (!res.ok) throw new Error("Accès refusé ou utilisateur introuvable");
-    return res.json();
+
+    return res.data;
 }

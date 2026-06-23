@@ -1,8 +1,10 @@
 import os
 import mysql.connector
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
+import hashlib
+import secrets
 
 app = FastAPI()
 
@@ -103,20 +105,21 @@ async def post_users(user: UserCreate):
             conn.close()
 
 @app.post("/admin/login")
-async def admin_login(body: AdminLogin):
-    conn = cursor = None
+async def admin_login(admin: AdminLogin):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT email FROM admins WHERE email = %s AND password = %s",
-            (body.email, hash_password(body.password)),
+            (admin.email, hash_password(admin.password)),
         )
         row = cursor.fetchone()
         if not row:
             raise HTTPException(status_code=401, detail="Identifiants invalides")
         token = secrets.token_hex(32)
-        _active_tokens[token] = body.email
+        _active_tokens[token] = admin.email
         return {"token": token}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
