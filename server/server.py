@@ -21,6 +21,24 @@ class UserCreate(BaseModel):
     ville: str
     code_postal: str
 
+class AdminLogin(BaseModel):
+    email: str
+    password: str
+
+
+_active_tokens: dict[str, str] = {}
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def require_admin_token(authorization: str = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token manquant ou invalide")
+    token = authorization.removeprefix("Bearer ").strip()
+    if token not in _active_tokens:
+        raise HTTPException(status_code=401, detail="Token invalide ou expiré")
+    return _active_tokens[token]
+
 def get_db_connection():
     return mysql.connector.connect(
         database=os.getenv("MYSQL_DATABASE"),
@@ -83,3 +101,62 @@ async def post_users(user: UserCreate):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+@app.post("/admin/login")
+async def admin_login(body: AdminLogin):
+    conn = cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT email FROM admins WHERE email = %s AND password = %s",
+            (body.email, hash_password(body.password)),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=401, detail="Identifiants invalides")
+        token = secrets.token_hex(32)
+        _active_tokens[token] = body.email
+        return {"token": token}
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
+
+@app.delete("/users/{user_id}", status_code=200)
+async def delete_user(user_id: int, admin_email: str = Depends(require_admin_token)):
+    conn = cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM utilisateurs WHERE id = %s", (user_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+        cursor.execute("DELETE FROM utilisateurs WHERE id = %s", (user_id,))
+        conn.commit()
+        return {"message": f"User {user_id} deleted"}
+    except mysql.connector.Error as err:
+        if conn: conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
+
+@app.get("/users/{user_id}")
+async def get_user_detail(user_id: int, admin_email: str = Depends(require_admin_token)):
+    conn = cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM utilisateurs WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+        columns = [desc[0] for desc in cursor.description]
+        return dict(zip(columns, row))
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
