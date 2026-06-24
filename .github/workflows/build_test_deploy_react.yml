@@ -55,6 +55,7 @@ jobs:
           echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
           echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
           echo "MYSQL_HOST=db" >> .env
+          echo "MYSQL_PORT=${{secrets.MYSQL_PORT}}" >> .env
           echo "MYSQL_ADMIN_EMAIL=${{ secrets.MYSQL_ADMIN_EMAIL }}" >> .env
           echo "MYSQL_ADMIN_PASSWORD=${{ secrets.MYSQL_ADMIN_PASSWORD }}" >> .env
           echo "REACT_APP_SERVER_URL=http://localhost:8000" >> .env
