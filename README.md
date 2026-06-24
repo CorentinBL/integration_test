@@ -10,7 +10,7 @@ Application React permettant à un utilisateur de s'enregistrer via un formulair
 |---|--------------------------------------------------------------------|
 | 📁 Repository GitHub | https://github.com/CorentinBL/integration_test                     |
 | 🌐 Frontend déployé (GitHub Pages) | https://corentinbl.github.io/integration_test/                     |
-| 🔧 Backend déployé (Vercel) | https://ton-projet.vercel.app                                      |
+| 🔧 Backend déployé (Vercel) | https://integration-test-henna.vercel.app/                               |
 | 🐳 Image Docker Frontend (Docker Hub) | https://hub.docker.com/r/corentinbla/frontend                      |
 | 🐳 Image Docker Backend (Docker Hub) | https://hub.docker.com/r/corentinbla/backend                       |
 | 📦 Package npm | https://www.npmjs.com/package/integration-test-react-corentin-2026 |
