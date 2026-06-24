@@ -55,6 +55,7 @@ jobs:
           echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
           echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
           echo "MYSQL_HOST=db" >> .env
+          echo "MYSQL_PORT=${{secrets.MYSQL_PORT}}" >> .env
           echo "MYSQL_ADMIN_EMAIL=${{ secrets.MYSQL_ADMIN_EMAIL }}" >> .env
           echo "MYSQL_ADMIN_PASSWORD=${{ secrets.MYSQL_ADMIN_PASSWORD }}" >> .env
           echo "REACT_APP_SERVER_URL=http://localhost:8000" >> .env
@@ -66,8 +67,40 @@ jobs:
         env:
           REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
 
+      - name: Show logs if failure
+        if: failure()
+        run: |
+          echo "=== CONTAINER STATUS ==="
+          docker compose ps
+
+          echo "=== DB LOGS ==="
+          docker compose logs db
+
+          echo "=== SERVER LOGS ==="
+          docker compose logs server
+
       - name: Wait for services to be healthy
-        run: sleep 40
+        run: |
+          echo "Waiting for API + DB to be ready..."
+          READY=false
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/users)
+            if [ "$STATUS" = "200" ]; then
+            echo "API + DB ready!"
+            READY=true
+            break
+            fi
+            echo "Attempt $i/30 - /users returned $STATUS, waiting..."
+            sleep 5
+          done
+
+          if [ "$READY" = "false" ]; then
+          echo "=== TIMEOUT - DB never ready, dumping logs ==="
+          docker compose ps
+          docker compose logs db
+          docker compose logs server
+          exit 1
+          fi
 
       # INSTRUCTION : Tests d'infrastructure
       - name: Test infrastructure - API healthy
