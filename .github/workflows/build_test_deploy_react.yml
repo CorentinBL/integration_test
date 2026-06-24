@@ -66,6 +66,18 @@ jobs:
         env:
           REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
 
+      - name: Show logs if failure
+        if: failure()
+        run: |
+          echo "=== CONTAINER STATUS ==="
+          docker compose ps
+
+          echo "=== DB LOGS ==="
+          docker compose logs db
+
+          echo "=== SERVER LOGS ==="
+          docker compose logs server
+
       - name: Wait for services to be healthy
         run: sleep 40
 
